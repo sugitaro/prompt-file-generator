@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI プロンプト管理ファイル自動生成ツール</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 600px;
+        }
+        
+        .input-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+        }
+        
+        .output-section {
+            padding: 30px;
+            background: white;
+            overflow-y: auto;
+            max-height: 80vh;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95rem;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .form-group.large-textarea textarea {
+            min-height: 200px;
+        }
+        
+        .tags-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 8px 12px;
+            min-height: 50px;
+        }
+        
+        .tag {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tag-remove {
+            cursor: pointer;
+            font-weight: bold;
+            opacity: 0.7;
+        }
+        
+        .tag-remove:hover {
+            opacity: 1;
+        }
+        
+        .tags-input input {
+            border: none;
+            outline: none;
+            flex: 1;
+            min-width: 100px;
+            padding: 4px 0;
+        }
+        
+        .generate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .output-tab {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .tab-btn {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .file-output {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .file-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .file-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+        
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .copy-btn:hover {
+            background: #218838;
+        }
+        
+        .file-content {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .download-all {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .download-all:hover {
+            background: #138496;
+            transform: translateY(-1px);
+        }
+        
+        .help-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-section {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI プロンプト管理ファイル自動生成ツール</h1>
+            <p>GitHub プロンプト管理システム対応 - 新しいプロンプトから必要なファイル一式を自動生成</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <form id="promptForm">
+                    <div class="form-group">
+                        <label for="promptId">プロンプトID</label>
+                        <input type="text" id="promptId" placeholder="例: blog-writer-assistant" required>
+                        <div class="help-text">英数字とハイフンのみ使用可能（自動生成ボタンあり）</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="promptTitle">プロンプトタイトル</label>
+                        <input type="text" id="promptTitle" placeholder="例: ブログ記事作成アシスタント" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="category">カテゴリ</label>
+                        <select id="category" required>
+                            <option value="">カテゴリを選択</option>
+                            <option value="coding">coding</option>
+                            <option value="writing">writing</option>
+                            <option value="analysis">analysis</option>
+                            <option value="creative">creative</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tags">タグ</label>
+                        <div class="tags-input" id="tagsInput">
+                            <input type="text" placeholder="タグを入力してEnterキー" id="tagInput">
+                        </div>
+                        <div class="help-text">Enterキーでタグを追加</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="author">作成者</label>
+                        <input type="text" id="author" placeholder="あなたの名前" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="difficulty">難易度</label>
+                        <select id="difficulty" required>
+                            <option value="">難易度を選択</option>
+                            <option value="beginner">beginner (初級)</option>
+                            <option value="intermediate">intermediate (中級)</option>
+                            <option value="advanced">advanced (上級)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">プロンプトの概要</label>
+                        <textarea id="description" placeholder="プロンプトの簡潔な説明を入力" required></textarea>
+                    </div>
+                    
+                    <div class="form-group large-textarea">
+                        <label for="promptContent">プロンプト内容</label>
+                        <textarea id="promptContent" placeholder="実際のプロンプト内容を入力してください..." required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="useCases">使用場面（改行区切り）</label>
+                        <textarea id="useCases" placeholder="例:\nブログ記事の構成作成\nSEO対策済みの記事執筆\n読者のエンゲージメント向上"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="expectedOutput">期待される出力</label>
+                        <textarea id="expectedOutput" placeholder="AIからの期待される出力形式や内容を記載"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="notes">注意点（改行区切り）</label>
+                        <textarea id="notes" placeholder="例:\n文字数制限に注意\nターゲット読者を明確に設定\nSEOキーワードの事前調査が必要"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="generate-btn">📁 ファイル一式を生成</button>
+                </form>
+            </div>
+            
+            <div class="output-section">
+                <div class="output-tab">
+                    <button class="tab-btn active" data-tab="metadata">metadata.yml</button>
+                    <button class="tab-btn" data-tab="prompt">prompt.md</button>
+                    <button class="tab-btn" data-tab="readme">README.md</button>
+                    <button class="tab-btn" data-tab="examples">examples.md</button>
+                </div>
+                
+                <div id="metadata" class="tab-content active">
+                    <div class="file-output">
+                        <div class="file-header">
+                            <span class="file-name">metadata.yml</span>
+                            <button class="copy-btn" onclick="copyToClipboard('metadataContent')">コピー</button>
+                        </div>
+                        <div class="file-content" id="metadataContent">
+# ファイルを生成するために上のフォームを入力してください
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="prompt" class="tab-content">
+                    <div class="file-output">
+                        <div class="file-header">
+                            <span class="file-name">prompt.md</span>
+                            <button class="copy-btn" onclick="copyToClipboard('promptContent')">コピー</button>
+                        </div>
+                        <div class="file-content" id="promptContentOutput">
+# ファイルを生成するために上のフォームを入力してください
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="readme" class="tab-content">
+                    <div class="file-output">
+                        <div class="file-header">
+                            <span class="file-name">README.md</span>
+                            <button class="copy-btn" onclick="copyToClipboard('readmeContent')">コピー</button>
+                        </div>
+                        <div class="file-content" id="readmeContent">
+# ファイルを生成するために上のフォームを入力してください
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="examples" class="tab-content">
+                    <div class="file-output">
+                        <div class="file-header">
+                            <span class="file-name">examples.md</span>
+                            <button class="copy-btn" onclick="copyToClipboard('examplesContent')">コピー</button>
+                        </div>
+                        <div class="file-content" id="examplesContent">
+# ファイルを生成するために上のフォームを入力してください
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="download-all" onclick="downloadAllFiles()" id="downloadBtn" style="display: none;">
+                    💾 全ファイルをダウンロード
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tags = [];
+        let generatedFiles = {};
+
+        // タグ機能
+        const tagInput = document.getElementById('tagInput');
+        const tagsContainer = document.getElementById('tagsInput');
+
+        tagInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const value = this.value.trim();
+                if (value && !tags.includes(value)) {
+                    tags.push(value);
+                    renderTags();
+                    this.value = '';
+                }
+            }
+        });
+
+        function renderTags() {
+            const existingTags = tagsContainer.querySelectorAll('.tag');
+            existingTags.forEach(tag => tag.remove());
+
+            tags.forEach(tag => {
+                const tagElement = document.createElement('div');
+                tagElement.className = 'tag';
+                tagElement.innerHTML = `
+                    ${tag}
+                    <span class="tag-remove" onclick="removeTag('${tag}')">×</span>
+                `;
+                tagsContainer.insertBefore(tagElement, tagInput);
+            });
+        }
+
+        function removeTag(tagToRemove) {
+            tags = tags.filter(tag => tag !== tagToRemove);
+            renderTags();
+        }
+
+        // プロンプトIDの自動生成
+        document.getElementById('promptTitle').addEventListener('input', function() {
+            const title = this.value;
+            const id = title
+                .toLowerCase()
+                .replace(/[^a-z0-9\s]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+            document.getElementById('promptId').value = id;
+        });
+
+        // タブ切り替え
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tabId = this.dataset.tab;
+                
+                // アクティブなタブを切り替え
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                this.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // フォーム送信
+        document.getElementById('promptForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            generateFiles();
+        });
+
+        function generateFiles() {
+            const formData = {
+                promptId: document.getElementById('promptId').value,
+                promptTitle: document.getElementById('promptTitle').value,
+                category: document.getElementById('category').value,
+                tags: tags,
+                author: document.getElementById('author').value,
+                difficulty: document.getElementById('difficulty').value,
+                description: document.getElementById('description').value,
+                promptContent: document.getElementById('promptContent').value,
+                useCases: document.getElementById('useCases').value.split('\n').filter(line => line.trim()),
+                expectedOutput: document.getElementById('expectedOutput').value,
+                notes: document.getElementById('notes').value.split('\n').filter(line => line.trim())
+            };
+
+            const today = new Date().toISOString().split('T')[0];
+
+            // metadata.yml生成
+            const metadata = `id: "${formData.promptId}"
+title: "${formData.promptTitle}"
+category: "${formData.category}"
+tags: [${formData.tags.map(tag => `"${tag}"`).join(', ')}]
+version: "1.0"
+created: "${today}"
+updated: "${today}"
+author: "${formData.author}"
+model_tested: ["claude-4"]
+difficulty: "${formData.difficulty}"
+estimated_tokens: ${Math.ceil(formData.promptContent.length / 4)}
+description: "${formData.description}"`;
+
+            // prompt.md生成
+            const promptMd = `# ${formData.promptTitle}
+
+${formData.promptContent}`;
+
+            // README.md生成
+            const readmeMd = `# ${formData.promptTitle}
+
+## 概要
+${formData.description}
+
+## 使用場面
+${formData.useCases.map(useCase => `- ${useCase}`).join('\n')}
+
+## 期待される出力
+${formData.expectedOutput}
+
+${formData.notes.length > 0 ? `## 注意点
+${formData.notes.map(note => `- ${note}`).join('\n')}` : ''}
+
+## バージョン履歴
+- v1.0: 初期版作成
+
+## 関連プロンプト
+- 現在なし`;
+
+            // examples.md生成
+            const examplesMd = `# 使用例
+
+## 例1: 基本的な使用方法
+
+### 入力例
+    [ここに入力例を記載]
+
+### 期待される出力例
+    [ここに期待される出力例を記載]
+
+## 例2: 応用的な使用方法
+
+### 入力例
+    [ここに応用例の入力を記載]
+
+### 期待される出力例
+    [ここに応用例の出力を記載]
+
+## 実際の使用手順
+
+1. プロンプトをコピーしてAIに送信
+2. 必要な情報を提供
+3. 出力された結果を確認
+4. 必要に応じて追加の指示や修正を要求
+
+## 対応AI
+- Claude (推奨)
+- ChatGPT
+- その他の大規模言語モデル
+
+## カスタマイズのヒント
+- [具体的なカスタマイズ方法を記載]
+- [パフォーマンス向上のコツ]`;
+
+            // 生成されたファイルを保存
+            generatedFiles = {
+                'metadata.yml': metadata,
+                'prompt.md': promptMd,
+                'README.md': readmeMd,
+                'examples.md': examplesMd
+            };
+
+            // 表示更新
+            document.getElementById('metadataContent').textContent = metadata;
+            document.getElementById('promptContentOutput').textContent = promptMd;
+            document.getElementById('readmeContent').textContent = readmeMd;
+            document.getElementById('examplesContent').textContent = examplesMd;
+            
+            // ダウンロードボタンを表示
+            document.getElementById('downloadBtn').style.display = 'block';
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                // 一時的にボタンテキストを変更
+                const copyBtn = element.parentElement.querySelector('.copy-btn');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'コピー済み!';
+                copyBtn.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.background = '#28a745';
+                }, 1000);
+            });
+        }
+
+        function downloadAllFiles() {
+            Object.entries(generatedFiles).forEach(([filename, content]) => {
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        }
+    </script>
+</body>
+</html>
